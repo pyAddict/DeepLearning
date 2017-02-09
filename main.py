@@ -1,57 +1,60 @@
-from keras_all_code import Multiclass_Without_Grid_Search,Binary_Without_Grid_Search,Binary_With_Grid_Search,Regression_Without_Grid_Search,Regression_With_Grid_Search
 import numpy as np
-import pandas as pd
-from keras.utils import np_utils
-# Multiclass Testing
-from sklearn.preprocessing import LabelEncoder
-df = pd.read_csv('./iris.data.csv', delimiter=',', header=None)
-data = df.values
-x = data[
-    :, 0:4].astype(float)
-y = data[:, 4]
+import cv2
+from random import shuffle, randrange, sample
+from data_preprocessing import process_data, isModelString, isModelFile
+typ = 3
+data, ind1, ind2 = process_data(
+    typ=typ)
+testStartIndex = ind1
+testStopIndex = ind2
+print(testStartIndex,
+      testStopIndex)
+train_file = np.concatenate(
+    [data[:testStartIndex], data[testStopIndex:]])
+test_file = data[
+    testStartIndex:testStopIndex]
+print(train_file.shape,
+      test_file.shape)
 
-encoder = LabelEncoder()
-encoder.fit(y)
-encoded_y = encoder.transform(
-    y)
-dummy_y = np_utils.to_categorical(
-    encoded_y)
-obj = Multiclass(
-    x, dummy_y)
-obj._model_build()
+X_data = []
+Y_data = []
+countOtherFiles = 0
+countIphone = 0
+countSamsung = 0
+for myFile in train_file:
+	if isModelFile(myFile, [['iphone']]):
+		countIphone += 1
+		image = cv2.imread(myFile, 1).astype(np.uint8)
+		if image.shape == (150, 150, 3):
+			index = randrange(len(Y_data) + 1)
+			Y_data.insert(index, 1)
+			X_data.insert(index, image)
+	elif isModelFile(myFile, [['samsung']]):
+		countSamsung += 1
+		image = cv2.imread(myFile, 1).astype(np.uint8)
+		if image.shape == (150, 150, 3):
+			index = randrange(len(Y_data) + 1)
+			Y_data.insert(index, 2)
+			X_data.insert(index, image)
 
-# Binary without grid search Testing
-data = np.loadtxt('./pima-indians-diabetes.data.csv', delimiter=',')
-x = data[:, 0:8]
-y = data[:, 8]
-obj = Binary_Without_Grid_Search(x,y)
-obj._model_build()
+	else:
+		if countOtherFiles > 6000:
+			continue
+		countOtherFiles += 1
+		image = cv2.imread(myFile, 1).astype(np.uint8)
+		if image.shape == (150, 150, 3):
+		    index = randrange(
+		        len(Y_data) + 1)
+		    Y_data.insert(
+		        index, 3)
+		    X_data.insert(
+		        index, image)
 
-# Binary with grid search Testing
-data = np.loadtxt('./pima-indians-diabetes.data.csv', delimiter=',')
-x = data[:, 0:8]
-y = data[:, 8]
-obj = Binary_With_Grid_Search(x,y)
-obj._model_build()
-
-# Regression_without_Grid_Search
-load dataset
-df = pd.read_csv("./housing.data.csv", delim_whitespace=True, header=None)
-data = df.values
-# split into input (X) and output (Y) variables
-x = data[:,0:13]
-y = data[:,13]
-
-obj = Regression_Without_Grid_Search(x,y)
-obj._model_build()
-
-# Regression_with_Grid_Search
-load dataset
-df = pd.read_csv("./housing.data.csv", delim_whitespace=True, header=None)
-data = df.values
-# split into input (X) and output (Y) variables
-x = data[:,0:13]
-y = data[:,13]
-
-obj = Regression_With_Grid_Search(x,y)
-obj._model_build()
+print("iphone files: ",
+      countIphone)
+print("samsung files: ",
+      countSamsung)
+print("other files: ",
+      countOtherFiles)
+print('X_data and Y_data length - ',
+      len(X_data), len(Y_data))
